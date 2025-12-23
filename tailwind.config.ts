@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["DM Sans", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,33 +60,43 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        chat: {
+          header: "hsl(var(--chat-header))",
+          "header-foreground": "hsl(var(--chat-header-foreground))",
+          "bubble-bot": "hsl(var(--chat-bubble-bot))",
+          "bubble-user": "hsl(var(--chat-bubble-user))",
+          "bubble-user-foreground": "hsl(var(--chat-bubble-user-foreground))",
+          "input-bg": "hsl(var(--chat-input-bg))",
+          online: "hsl(var(--chat-online))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "2xl": "1.5rem",
+        "3xl": "2rem",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "typing-dot": {
+          "0%, 60%, 100%": { transform: "translateY(0)" },
+          "30%": { transform: "translateY(-4px)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "typing-1": "typing-dot 1.4s ease-in-out infinite",
+        "typing-2": "typing-dot 1.4s ease-in-out 0.2s infinite",
+        "typing-3": "typing-dot 1.4s ease-in-out 0.4s infinite",
       },
     },
   },
