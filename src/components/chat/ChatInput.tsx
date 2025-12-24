@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Paperclip } from "lucide-react";
+import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -28,13 +28,6 @@ const ChatInput = ({ onSend, placeholder = "Type your message...", disabled }: C
 
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2 p-4 bg-card border-t border-border">
-      <button
-        type="button"
-        className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-      >
-        <Paperclip className="w-5 h-5" />
-      </button>
-      
       <div className="flex-1 relative">
         <textarea
           value={message}
