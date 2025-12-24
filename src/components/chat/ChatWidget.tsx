@@ -87,7 +87,7 @@ const ChatWidget = () => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto h-[600px] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
+    <div className="w-full max-w-sm sm:max-w-md mx-auto h-[500px] sm:h-[550px] max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
       {activeTab === "home" ? (
         <>
           <WelcomeScreen
