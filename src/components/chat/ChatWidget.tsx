@@ -89,19 +89,16 @@ const ChatWidget = () => {
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto h-[500px] sm:h-[550px] max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
       {activeTab === "home" ? (
-        <>
-          <WelcomeScreen
-            brandName="Twin Health"
-            tagline="We are here to help you!"
-            recentConversation={{
-              senderName: "Twin Assistant",
-              message: "What are you looking for?",
-              time: "3 mins ago",
-            }}
-            onViewConversation={() => setActiveTab("conversation")}
-          />
-          <ChatNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-        </>
+        <WelcomeScreen
+          brandName="Twin Health"
+          tagline="We are here to help you!"
+          recentConversation={{
+            senderName: "Twin Assistant",
+            message: "What are you looking for?",
+            time: "3 mins ago",
+          }}
+          onViewConversation={() => setActiveTab("conversation")}
+        />
       ) : (
         <>
           <ChatHeader
@@ -129,7 +126,6 @@ const ChatWidget = () => {
             placeholder="We are here to help you..."
             disabled={isTyping}
           />
-          <ChatNavigation activeTab={activeTab} onTabChange={setActiveTab} />
         </>
       )}
     </div>
