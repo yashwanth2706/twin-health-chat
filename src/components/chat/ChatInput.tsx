@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -56,13 +56,6 @@ const ChatInput = ({ onSend, placeholder = "Type your message...", disabled }: C
           }}
         />
       </div>
-      
-      <button
-        type="button"
-        className="flex-shrink-0 p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary"
-      >
-        <Smile className="w-5 h-5" />
-      </button>
       
       <button
         type="submit"
