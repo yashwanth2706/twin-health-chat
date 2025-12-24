@@ -5,7 +5,7 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <>
@@ -27,7 +27,8 @@ const Index = () => {
         {/* Chat Widget Container */}
         <div
           className={cn(
-            "fixed bottom-24 right-6 z-50 transition-all duration-300 ease-out",
+            "fixed bottom-20 right-6 z-50 transition-all duration-300 ease-out",
+            "max-h-[calc(100vh-120px)]",
             isOpen 
               ? "opacity-100 scale-100 translate-y-0" 
               : "opacity-0 scale-95 translate-y-4 pointer-events-none"
