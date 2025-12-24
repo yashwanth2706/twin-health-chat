@@ -14,7 +14,7 @@ interface Message {
 }
 
 const ChatWidget = () => {
-  const [activeTab, setActiveTab] = useState<"home" | "conversation">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "conversation">("conversation");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
