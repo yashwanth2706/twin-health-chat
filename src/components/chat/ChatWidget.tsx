@@ -5,22 +5,32 @@ import ChatInput from "./ChatInput";
 import ChatNavigation from "./ChatNavigation";
 import WelcomeScreen from "./WelcomeScreen";
 import TypingIndicator from "./TypingIndicator";
+import UserDetailsForm from "./UserDetailsForm";
 
 interface Message {
   id: string;
   content: string;
   isBot: boolean;
   timestamp: string;
+  showForm?: boolean;
+}
+
+interface UserDetails {
+  name: string;
+  email: string;
+  phone: string;
 }
 
 const ChatWidget = () => {
   const [activeTab, setActiveTab] = useState<"home" | "conversation">("conversation");
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Welcome to Twin Health! 👋\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?",
+      content: "Welcome to Twin Health! 👋\n\nBefore we proceed, I'd like to collect your Name, Email, and Phone number.",
       isBot: true,
       timestamp: formatTime(new Date(Date.now() - 300000)),
+      showForm: true,
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
@@ -63,6 +73,26 @@ const ChatWidget = () => {
       };
       setMessages((prev) => [...prev, botResponse]);
     }, 1500);
+  };
+
+  const handleUserDetailsSubmit = (details: UserDetails) => {
+    setUserDetails(details);
+    
+    // Remove the form from the initial message
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === "1" ? { ...msg, showForm: false } : msg
+      )
+    );
+
+    // Add confirmation message
+    const confirmationMessage: Message = {
+      id: Date.now().toString(),
+      content: `Thank you, ${details.name}! 🎉\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`,
+      isBot: true,
+      timestamp: formatTime(new Date()),
+    };
+    setMessages((prev) => [...prev, confirmationMessage]);
   };
 
   const getBotResponse = (userMessage: string): string => {
@@ -108,13 +138,19 @@ const ChatWidget = () => {
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/30">
             {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                content={message.content}
-                isBot={message.isBot}
-                timestamp={message.timestamp}
-                senderName={message.isBot ? "Twin Assistant" : undefined}
-              />
+              <div key={message.id}>
+                <ChatMessage
+                  content={message.content}
+                  isBot={message.isBot}
+                  timestamp={message.timestamp}
+                  senderName={message.isBot ? "Twin Assistant" : undefined}
+                />
+                {message.showForm && (
+                  <div className="mt-3 ml-12">
+                    <UserDetailsForm onSubmit={handleUserDetailsSubmit} />
+                  </div>
+                )}
+              </div>
             ))}
             {isTyping && <TypingIndicator senderName="Twin Assistant" />}
             <div ref={messagesEndRef} />
@@ -123,7 +159,7 @@ const ChatWidget = () => {
           <ChatInput
             onSend={handleSendMessage}
             placeholder="We are here to help you..."
-            disabled={isTyping}
+            disabled={isTyping || !userDetails}
           />
         </>
       )}
