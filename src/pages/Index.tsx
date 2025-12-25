@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Helmet } from "react-helmet";
 import { MessageCircle, X } from "lucide-react";
 import ChatWidget from "@/components/chat/ChatWidget";
+import Header from "@/components/landing/Header";
+import HeroSection from "@/components/landing/HeroSection";
+import WhyTwinSection from "@/components/landing/WhyTwinSection";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -10,19 +13,17 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>Twin Health Chat - Your Digital Health Partner</title>
+        <title>Twin Health - Reverse Diabetes with India's Whole Body Digital Twin™</title>
         <meta 
           name="description" 
-          content="Connect with Twin Health's AI assistant for personalized guidance on diabetes reversal and metabolic wellness." 
+          content="We help you reverse diabetes, obesity and PCOD by healing the exact root cause of your metabolism. 50000+ members benefitted." 
         />
       </Helmet>
       
       <div className="min-h-screen bg-background">
-        {/* Demo content */}
-        <div className="p-8">
-          <h1 className="text-2xl font-bold text-foreground">Welcome to Twin Health</h1>
-          <p className="text-muted-foreground mt-2">Click the chat button to start a conversation.</p>
-        </div>
+        <Header />
+        <HeroSection />
+        <WhyTwinSection />
 
         {/* Chat Widget Container */}
         <div
