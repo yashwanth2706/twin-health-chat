@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
+import twinHealthLogo from "@/assets/TwinHealthLogo.png";
 
 const Header = () => {
   return (
     <header className="w-full py-4 px-6 md:px-12 flex items-center justify-between bg-[#1a1f3d]">
       <div className="flex items-center gap-2">
         <div className="flex items-center">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 8C20 8 12 14 12 22C12 26.4183 15.5817 30 20 30C24.4183 30 28 26.4183 28 22C28 14 20 8 20 8Z" fill="#E94E87"/>
-            <path d="M14 12C14 12 8 16 8 22C8 25.3137 10.6863 28 14 28C17.3137 28 20 25.3137 20 22C20 16 14 12 14 12Z" fill="#4299E1"/>
-            <path d="M26 12C26 12 32 16 32 22C32 25.3137 29.3137 28 26 28C22.6863 28 20 25.3137 20 22C20 16 26 12 26 12Z" fill="#F6AD55"/>
-          </svg>
+          <img src={twinHealthLogo} alt="Twin Health" className="w-10 h-10" />
           <span className="ml-2 text-xl font-bold text-white leading-tight">
             twin<br />health
           </span>
