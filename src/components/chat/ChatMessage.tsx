@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import twinHealthLogo from "@/assets/TwinHealthLogo.png";
 
 interface ChatMessageProps {
   content: string;
@@ -8,7 +9,7 @@ interface ChatMessageProps {
   senderName?: string;
 }
 
-const ChatMessage = ({ content, isBot, timestamp, avatarUrl, senderName }: ChatMessageProps) => {
+const ChatMessage = ({ content, isBot, timestamp, senderName }: ChatMessageProps) => {
   return (
     <div 
       className={cn(
@@ -17,14 +18,8 @@ const ChatMessage = ({ content, isBot, timestamp, avatarUrl, senderName }: ChatM
       )}
     >
       {isBot && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-card shadow-sm overflow-hidden flex items-center justify-center">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={senderName || "Bot"} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-primary font-semibold text-sm">
-              {(senderName || "B").charAt(0).toUpperCase()}
-            </span>
-          )}
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white shadow-sm overflow-hidden flex items-center justify-center p-1">
+          <img src={twinHealthLogo} alt="Twin Health" className="w-full h-full object-contain" />
         </div>
       )}
       
