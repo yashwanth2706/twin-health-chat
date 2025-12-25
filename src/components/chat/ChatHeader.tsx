@@ -1,4 +1,5 @@
 import { ChevronLeft } from "lucide-react";
+import twinHealthLogo from "@/assets/TwinHealthLogo.png";
 
 interface ChatHeaderProps {
   name: string;
@@ -7,7 +8,7 @@ interface ChatHeaderProps {
   onBack?: () => void;
 }
 
-const ChatHeader = ({ name, subtitle, avatarUrl, onBack }: ChatHeaderProps) => {
+const ChatHeader = ({ name, subtitle, onBack }: ChatHeaderProps) => {
   return (
     <header className="flex items-center gap-3 bg-chat-header px-4 py-3 rounded-t-2xl">
       {onBack && (
@@ -20,14 +21,8 @@ const ChatHeader = ({ name, subtitle, avatarUrl, onBack }: ChatHeaderProps) => {
       )}
       
       <div className="relative">
-        <div className="w-10 h-10 rounded-full bg-card overflow-hidden flex items-center justify-center shadow-sm">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-primary font-semibold text-lg">
-              {name.charAt(0).toUpperCase()}
-            </span>
-          )}
+        <div className="w-10 h-10 rounded-full bg-white overflow-hidden flex items-center justify-center shadow-sm p-1">
+          <img src={twinHealthLogo} alt="Twin Health" className="w-full h-full object-contain" />
         </div>
         <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-chat-online rounded-full border-2 border-chat-header" />
       </div>
