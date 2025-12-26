@@ -7,14 +7,16 @@ from rest_framework.views import APIView
 from google import genai
 from datetime import datetime
 import uuid
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 from .models import ChatSession, Message
-from .serializers import ChatSessionSerializer, MessageSerializer, ChatMessageRequestSerializer, ChatResponseSerializer
+from .serializers import ChatSessionSerializer, ChatMessageRequestSerializer
 
-# Configure Gemini API
-genai.configure(api_key=settings.GEMINI_API_KEY)
+# Gets the Gemini API Key from the environment variable `GEMINI_API_KEY`.
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-
+@method_decorator(csrf_exempt, name="dispatch")
 class ChatSessionViewSet(viewsets.ModelViewSet):
     """ViewSet for managing chat sessions"""
     queryset = ChatSession.objects.all()
@@ -78,7 +80,7 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-
+@method_decorator(csrf_exempt, name="dispatch")
 class ChatMessageAPIView(APIView):
     """API endpoint for sending messages and getting responses from Gemini"""
 
@@ -175,8 +177,6 @@ class ChatMessageAPIView(APIView):
 
         Always maintain a friendly, professional tone."""
                 
-        # Create the client
-        client = genai.Client()
         response = client.models.generate_content(
             model="gemini-2.5-flash-lite",
             contents=system_prompt + "\n\nUser: " + user_message,
