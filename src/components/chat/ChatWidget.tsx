@@ -5,7 +5,6 @@ import ChatInput from "./ChatInput";
 import WelcomeScreen from "./WelcomeScreen";
 import TypingIndicator from "./TypingIndicator";
 import InlineInput from "./InlineInput";
-import RestartButton from "./RestartButton";
 
 interface Message {
   id: string;
@@ -208,13 +207,6 @@ const ChatWidget = () => {
     }, 1500);
   };
 
-  const handleRestart = () => {
-    setMessages(getInitialMessages());
-    setUserDetails({ name: "", email: "", phone: "" });
-    setCollectionStage("greeting");
-    setHasInitialized(false);
-  };
-
   const getBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
     
@@ -299,11 +291,6 @@ const ChatWidget = () => {
               </div>
             ))}
             {isTyping && <TypingIndicator senderName="Twin Assistant" />}
-            
-            {collectionStage !== "greeting" && !isTyping && (
-              <RestartButton onRestart={handleRestart} />
-            )}
-            
             <div ref={messagesEndRef} />
           </div>
           
