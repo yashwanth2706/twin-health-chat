@@ -5,14 +5,12 @@ import ChatInput from "./ChatInput";
 import ChatNavigation from "./ChatNavigation";
 import WelcomeScreen from "./WelcomeScreen";
 import TypingIndicator from "./TypingIndicator";
-import UserDetailsForm from "./UserDetailsForm";
 
 interface Message {
   id: string;
   content: string;
   isBot: boolean;
   timestamp: string;
-  showForm?: boolean;
 }
 
 interface UserDetails {
@@ -21,19 +19,27 @@ interface UserDetails {
   phone: string;
 }
 
+type CollectionStage = "greeting" | "name" | "email" | "phone" | "complete";
+
+// Validation patterns
+const namePattern = /^[a-zA-Z][a-zA-Z\s'-]*[a-zA-Z]$|^[a-zA-Z]$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phonePattern = /^[6-9]\d{9}$/;
+
 const ChatWidget = () => {
   const [activeTab, setActiveTab] = useState<"home" | "conversation">("conversation");
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails>({ name: "", email: "", phone: "" });
+  const [collectionStage, setCollectionStage] = useState<CollectionStage>("greeting");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Welcome to Twin Health! 👋\n\nBefore we proceed, I'd like to collect your Name, Email, and Phone number.",
+      content: "Welcome to Twin Health! 👋",
       isBot: true,
       timestamp: formatTime(new Date(Date.now() - 300000)),
-      showForm: true,
     },
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -44,6 +50,29 @@ const ChatWidget = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // Start the collection flow after initial greeting
+  useEffect(() => {
+    if (!hasInitialized) {
+      setHasInitialized(true);
+      setTimeout(() => {
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: "2",
+              content: "Before we proceed, I'd like to know your name 😊",
+              isBot: true,
+              timestamp: formatTime(new Date()),
+            },
+          ]);
+          setCollectionStage("name");
+        }, 1500);
+      }, 1000);
+    }
+  }, [hasInitialized]);
+
   function formatTime(date: Date): string {
     return date.toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -51,6 +80,51 @@ const ChatWidget = () => {
       hour12: true,
     });
   }
+
+  const getValidationError = (stage: CollectionStage, value: string): string | null => {
+    const trimmedValue = value.trim();
+    
+    switch (stage) {
+      case "name":
+        if (!trimmedValue) return "Please enter your name.";
+        if (!namePattern.test(trimmedValue)) {
+          return "Please enter a valid name (letters, spaces, apostrophes, and hyphens only). Example: John, O'Neil, Van Der Beek";
+        }
+        return null;
+      case "email":
+        if (!trimmedValue) return "Please enter your email.";
+        if (!emailPattern.test(trimmedValue)) {
+          return "Please enter a valid email address.";
+        }
+        return null;
+      case "phone":
+        if (!trimmedValue) return "Please enter your phone number.";
+        const cleanPhone = trimmedValue.replace(/\s+/g, "");
+        if (!phonePattern.test(cleanPhone)) {
+          return "Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.";
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const addBotMessage = (content: string, callback?: () => void) => {
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          content,
+          isBot: true,
+          timestamp: formatTime(new Date()),
+        },
+      ]);
+      callback?.();
+    }, 1500);
+  };
 
   const handleSendMessage = (content: string) => {
     const newMessage: Message = {
@@ -60,8 +134,42 @@ const ChatWidget = () => {
       timestamp: formatTime(new Date()),
     };
     setMessages((prev) => [...prev, newMessage]);
+
+    // Handle collection stages
+    if (collectionStage !== "complete") {
+      const error = getValidationError(collectionStage, content);
+      
+      if (error) {
+        addBotMessage(error);
+        return;
+      }
+
+      const trimmedContent = content.trim();
+
+      switch (collectionStage) {
+        case "name":
+          setUserDetails((prev) => ({ ...prev, name: trimmedContent }));
+          addBotMessage(`Nice to meet you, ${trimmedContent}! 🎉\n\nPlease enter your email address:`, () => {
+            setCollectionStage("email");
+          });
+          break;
+        case "email":
+          setUserDetails((prev) => ({ ...prev, email: trimmedContent }));
+          addBotMessage("Great! Now please enter your phone number (10-digit Indian mobile):", () => {
+            setCollectionStage("phone");
+          });
+          break;
+        case "phone":
+          const cleanPhone = trimmedContent.replace(/\s+/g, "");
+          setUserDetails((prev) => ({ ...prev, phone: cleanPhone }));
+          setCollectionStage("complete");
+          addBotMessage(`Thank you for sharing your details! ✨\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`);
+          break;
+      }
+      return;
+    }
     
-    // Simulate bot typing
+    // Normal conversation after details collected
     setIsTyping(true);
     setTimeout(() => {
       setIsTyping(false);
@@ -73,26 +181,6 @@ const ChatWidget = () => {
       };
       setMessages((prev) => [...prev, botResponse]);
     }, 1500);
-  };
-
-  const handleUserDetailsSubmit = (details: UserDetails) => {
-    setUserDetails(details);
-    
-    // Remove the form from the initial message
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === "1" ? { ...msg, showForm: false } : msg
-      )
-    );
-
-    // Add confirmation message
-    const confirmationMessage: Message = {
-      id: Date.now().toString(),
-      content: `Thank you, ${details.name}! 🎉\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`,
-      isBot: true,
-      timestamp: formatTime(new Date()),
-    };
-    setMessages((prev) => [...prev, confirmationMessage]);
   };
 
   const getBotResponse = (userMessage: string): string => {
@@ -109,6 +197,19 @@ const ChatWidget = () => {
     }
     
     return "Thank you for your message! Our team is here to support your health journey. Is there anything specific about diabetes reversal or metabolic wellness you'd like to know?";
+  };
+
+  const getInputPlaceholder = (): string => {
+    switch (collectionStage) {
+      case "name":
+        return "Enter your name...";
+      case "email":
+        return "Enter your email...";
+      case "phone":
+        return "Enter your phone number...";
+      default:
+        return "We are here to help you...";
+    }
   };
 
   const botInfo = {
@@ -138,19 +239,13 @@ const ChatWidget = () => {
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/30">
             {messages.map((message) => (
-              <div key={message.id}>
-                <ChatMessage
-                  content={message.content}
-                  isBot={message.isBot}
-                  timestamp={message.timestamp}
-                  senderName={message.isBot ? "Twin Assistant" : undefined}
-                />
-                {message.showForm && (
-                  <div className="mt-3 ml-12">
-                    <UserDetailsForm onSubmit={handleUserDetailsSubmit} />
-                  </div>
-                )}
-              </div>
+              <ChatMessage
+                key={message.id}
+                content={message.content}
+                isBot={message.isBot}
+                timestamp={message.timestamp}
+                senderName={message.isBot ? "Twin Assistant" : undefined}
+              />
             ))}
             {isTyping && <TypingIndicator senderName="Twin Assistant" />}
             <div ref={messagesEndRef} />
@@ -158,8 +253,8 @@ const ChatWidget = () => {
           
           <ChatInput
             onSend={handleSendMessage}
-            placeholder="We are here to help you..."
-            disabled={isTyping || !userDetails}
+            placeholder={getInputPlaceholder()}
+            disabled={isTyping}
           />
         </>
       )}
