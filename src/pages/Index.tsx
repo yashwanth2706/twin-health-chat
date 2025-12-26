@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { MessageCircle, X } from "lucide-react";
 import ChatWidget from "@/components/chat/ChatWidget";
@@ -8,7 +8,15 @@ import WhyTwinSection from "@/components/landing/WhyTwinSection";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <>
