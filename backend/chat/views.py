@@ -4,7 +4,7 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import google.generativeai as genai
+from google import genai
 from datetime import datetime
 import uuid
 
@@ -156,11 +156,7 @@ class ChatMessageAPIView(APIView):
                 "role": role,
                 "parts": [msg.content]
             })
-        
-        # Create the model
-        model = genai.GenerativeModel(settings.GEMINI_MODEL)
-        
-        # System prompt for Twin Health chatbot
+            
         system_prompt = """You are a helpful health assistant for Twin Health, a platform dedicated to helping people reverse diabetes, 
         obesity, and PCOD by healing the root cause of metabolism. 
 
@@ -178,11 +174,21 @@ class ChatMessageAPIView(APIView):
         5. Answer questions about how our platform can help them
 
         Always maintain a friendly, professional tone."""
+                
+        # Create the client
+        client = genai.Client()
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=system_prompt + "\n\nUser: " + user_message,
+        )
+        # model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        
+        # System prompt for Twin Health chatbot
         
         # Create new chat session with Gemini
-        chat = model.start_chat(history=conversation_history)
+        # chat = model.start_chat(history=conversation_history)
         
         # Send the user message and get response
-        response = chat.send_message(user_message)
+        # response = chat.send_message(user_message)
         
         return response.text
