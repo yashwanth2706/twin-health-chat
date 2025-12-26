@@ -5,6 +5,7 @@ import ChatInput from "./ChatInput";
 import WelcomeScreen from "./WelcomeScreen";
 import TypingIndicator from "./TypingIndicator";
 import InlineInput from "./InlineInput";
+import { chatAPI } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -47,11 +48,13 @@ const getInitialMessages = (): Message[] => [
 
 const ChatWidget = () => {
   const [activeTab, setActiveTab] = useState<"home" | "conversation">("conversation");
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails>({ name: "", email: "", phone: "" });
   const [collectionStage, setCollectionStage] = useState<CollectionStage>("greeting");
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [isTyping, setIsTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -61,6 +64,25 @@ const ChatWidget = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Initialize chat session
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        const response = await chatAPI.createSession();
+        setSessionId(response.session_id);
+        setApiError(null);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize chat session';
+        console.error('Session initialization error:', errorMessage);
+        setApiError(errorMessage);
+      }
+    };
+
+    if (!sessionId) {
+      initializeSession();
+    }
+  }, []);
 
   // Start the collection flow after initial greeting
   useEffect(() => {
@@ -132,7 +154,7 @@ const ChatWidget = () => {
     }, 1500);
   };
 
-  const handleInlineSubmit = (value: string, inputType: "name" | "email" | "phone") => {
+  const handleInlineSubmit = async (value: string, inputType: "name" | "email" | "phone") => {
     const error = getValidationError(inputType as CollectionStage, value);
     
     if (error) {
@@ -159,31 +181,50 @@ const ChatWidget = () => {
     setMessages((prev) => [...prev, userMessage]);
 
     const trimmedValue = value.trim();
+    let updatedDetails = { ...userDetails };
 
     switch (inputType) {
       case "name":
-        setUserDetails((prev) => ({ ...prev, name: trimmedValue }));
+        updatedDetails = { ...updatedDetails, name: trimmedValue };
+        setUserDetails(updatedDetails);
         addBotMessage(`Nice to meet you, ${trimmedValue}! 🎉\n\nPlease enter your email address:`, "email", () => {
           setCollectionStage("email");
         });
         break;
       case "email":
-        setUserDetails((prev) => ({ ...prev, email: trimmedValue }));
+        updatedDetails = { ...updatedDetails, email: trimmedValue };
+        setUserDetails(updatedDetails);
         addBotMessage("Great! Now please enter your phone number:", "phone", () => {
           setCollectionStage("phone");
         });
         break;
       case "phone":
         const cleanPhone = trimmedValue.replace(/\s+/g, "");
-        setUserDetails((prev) => ({ ...prev, phone: cleanPhone }));
+        updatedDetails = { ...updatedDetails, phone: cleanPhone };
+        setUserDetails(updatedDetails);
+        
+        // Update user details on backend
+        if (sessionId) {
+          try {
+            await chatAPI.updateUserDetails(sessionId, updatedDetails);
+            setApiError(null);
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update user details';
+            console.error('Update details error:', errorMessage);
+            setApiError(errorMessage);
+          }
+        }
+        
+        // Set collection stage to complete immediately (not async)
         setCollectionStage("complete");
+        
         addBotMessage(`Thank you for sharing your details! ✨\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`);
         break;
     }
   };
 
-  const handleSendMessage = (content: string) => {
-    if (collectionStage !== "complete") return;
+  const handleSendMessage = async (content: string) => {
+    if (collectionStage !== "complete" || !sessionId) return;
 
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -193,34 +234,42 @@ const ChatWidget = () => {
     };
     setMessages((prev) => [...prev, newMessage]);
     
-    // Normal conversation after details collected
+    // Show typing indicator
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
+
+    try {
+      // Send message to Django backend with Gemini
+      const response = await chatAPI.sendMessage(
+        sessionId,
+        content,
+        userDetails
+      );
+
+      setApiError(null);
+
+      // Add bot response
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: getBotResponse(content),
+        content: response.bot_response,
         isBot: true,
         timestamp: formatTime(new Date()),
       };
       setMessages((prev) => [...prev, botResponse]);
-    }, 1500);
-  };
-
-  const getBotResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes("diabetes") || lowerMessage.includes("reverse")) {
-      return "At Twin Health, we use your personalized Whole Body Digital Twin™ to help reverse diabetes by addressing the root cause of your metabolism. Would you like to learn more about our approach?";
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get response from Gemini';
+      console.error('Send message error:', errorMessage);
+      setApiError(errorMessage);
+      
+      const errorMessage_: Message = {
+        id: (Date.now() + 2).toString(),
+        content: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
+        isBot: true,
+        timestamp: formatTime(new Date()),
+      };
+      setMessages((prev) => [...prev, errorMessage_]);
+    } finally {
+      setIsTyping(false);
     }
-    if (lowerMessage.includes("help") || lowerMessage.includes("start")) {
-      return "I can help you with:\n\n• Understanding our Whole Body Digital Twin™ technology\n• Booking a consultation\n• Learning about diabetes reversal\n• Tracking your metabolic health\n\nWhat would you like to explore?";
-    }
-    if (lowerMessage.includes("consultation") || lowerMessage.includes("book")) {
-      return "Great! I can help you schedule a consultation with our health experts. They'll create a personalized plan based on your health data. Shall I connect you with our team?";
-    }
-    
-    return "Thank you for your message! Our team is here to support your health journey. Is there anything specific about diabetes reversal or metabolic wellness you'd like to know?";
   };
 
   const getInputPlaceholder = (type: "name" | "email" | "phone"): string => {
