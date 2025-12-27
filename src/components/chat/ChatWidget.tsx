@@ -66,8 +66,8 @@ const ChatWidget = () => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails>({ name: "", email: "", phone: "" });
   const [collectionStage, setCollectionStage] = useState<CollectionStage>("initial");
-  const [showQuickActions, setShowQuickActions] = useState(true);
-  const [messages, setMessages] = useState<Message[]>(getInitialMessages());
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -81,6 +81,44 @@ const ChatWidget = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Initialize welcome messages with typing animation
+  useEffect(() => {
+    if (!hasInitialized) {
+      // Show typing indicator for first message (1.5 seconds)
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages([
+          {
+            id: "1",
+            content: "Hello 👋 Welcome to Twin Health! We're a precision metabolic health company using Whole Body Digital Twin™ technology — an AI-driven, personalized health platform that learns your unique metabolism and helps you heal your metabolism, reduce medications, and improve your metabolic health.",
+            isBot: true,
+            timestamp: formatTime(new Date()),
+          },
+        ]);
+
+        // Show typing indicator for second message
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: "2",
+              content: "How can we help you today?",
+              isBot: true,
+              timestamp: formatTime(new Date()),
+            },
+          ]);
+          // Show quick actions after all typing is complete
+          setShowQuickActions(true);
+        }, 1500);
+      }, 1500);
+
+      setHasInitialized(true);
+    }
+  }, [hasInitialized]);
 
   // Initialize chat session
   useEffect(() => {
