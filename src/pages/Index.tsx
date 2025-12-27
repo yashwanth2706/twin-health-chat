@@ -37,7 +37,7 @@ const Index = () => {
         <div
           className={cn(
             "fixed bottom-20 right-6 z-50 transition-all duration-300 ease-out",
-            "max-h-[calc(100vh-120px)]",
+            "max-h-[calc(100vh-120px)] w-[380px] sm:w-[420px]",
             isOpen 
               ? "opacity-100 scale-100 translate-y-0" 
               : "opacity-0 scale-95 translate-y-4 pointer-events-none"
