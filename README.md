@@ -4,6 +4,7 @@
 
 This project is built with:
 
+### Lovable AI with Prompt Engineering for UI
 - Vite
 - TypeScript
 - React
@@ -12,3 +13,5 @@ This project is built with:
 - Django
 - Python
 
+This repository is of creating a prototype to integrate AI Chat Assistant system in the website's landing page
+Enabling user engagement, lead capture and details
