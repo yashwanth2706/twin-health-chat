@@ -5,9 +5,10 @@ interface InlineInputProps {
   placeholder: string;
   onSubmit: (value: string) => void;
   type?: "text" | "email" | "tel";
+  label?: string;
 }
 
-const InlineInput = ({ placeholder, onSubmit, type = "text" }: InlineInputProps) => {
+const InlineInput = ({ placeholder, onSubmit, type = "text", label }: InlineInputProps) => {
   const [value, setValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -25,7 +26,10 @@ const InlineInput = ({ placeholder, onSubmit, type = "text" }: InlineInputProps)
   };
 
   return (
-    <div className="mt-2 space-y-1.5">
+    <div className="bg-card rounded-xl shadow-sm p-3 space-y-2">
+      {label && (
+        <p className="text-sm text-foreground">{label}</p>
+      )}
       <input
         type={type}
         value={value}
@@ -34,18 +38,20 @@ const InlineInput = ({ placeholder, onSubmit, type = "text" }: InlineInputProps)
         onBlur={() => setIsFocused(false)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className={`w-full px-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 ${
+        className={`w-full px-3 py-2 text-sm rounded-full border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none transition-all duration-200 ${
           isFocused ? "border-primary ring-2 ring-primary/20" : "border-border"
         }`}
       />
-      <button
-        onClick={handleSubmit}
-        disabled={!value.trim()}
-        className="flex items-center gap-1 text-sm text-primary font-medium hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
-      >
-        Submit
-        <ChevronRight className="w-3.5 h-3.5" />
-      </button>
+      <div className="flex justify-end">
+        <button
+          onClick={handleSubmit}
+          disabled={!value.trim()}
+          className="flex items-center gap-0.5 text-sm text-primary font-medium hover:text-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Submit
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };

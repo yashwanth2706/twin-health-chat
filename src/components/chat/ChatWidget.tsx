@@ -322,15 +322,19 @@ const ChatWidget = () => {
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/30">
             {messages.map((message) => (
               <div key={message.id}>
-                <ChatMessage
-                  content={message.content}
-                  isBot={message.isBot}
-                  timestamp={message.timestamp}
-                  senderName={message.isBot ? "Twin Assistant" : undefined}
-                />
+                {/* Hide bot message if it has an active input field (label shown in card) */}
+                {!(message.isBot && message.inputType && !message.inputSubmitted) && (
+                  <ChatMessage
+                    content={message.content}
+                    isBot={message.isBot}
+                    timestamp={message.timestamp}
+                    senderName={message.isBot ? "Twin Assistant" : undefined}
+                  />
+                )}
                 {message.isBot && message.inputType && !message.inputSubmitted && (
-                  <div className="mt-2">
+                  <div className="mt-2 ml-10">
                     <InlineInput
+                      label={message.content}
                       placeholder={getInputPlaceholder(message.inputType)}
                       type={getInputType(message.inputType)}
                       onSubmit={(value) => handleInlineSubmit(value, message.inputType!)}
