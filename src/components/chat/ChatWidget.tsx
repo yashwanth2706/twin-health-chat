@@ -22,7 +22,7 @@ interface UserDetails {
   phone: string;
 }
 
-type CollectionStage = "greeting" | "name" | "email" | "phone" | "complete";
+type CollectionStage = "initial" | "name" | "email" | "phone" | "complete";
 
 // Validation patterns
 const namePattern = /^[a-zA-Z][a-zA-Z\s'-]*[a-zA-Z]$|^[a-zA-Z]$/;
@@ -37,10 +37,23 @@ function formatTime(date: Date): string {
   });
 }
 
+const quickActions = [
+  "New Enquiry",
+  "Existing Member",
+  "Looking for Something else?",
+  "FAQs",
+];
+
 const getInitialMessages = (): Message[] => [
   {
     id: "1",
     content: "Welcome to Twin Health! 👋",
+    isBot: true,
+    timestamp: formatTime(new Date()),
+  },
+  {
+    id: "2",
+    content: "What are you looking for?",
     isBot: true,
     timestamp: formatTime(new Date()),
   },
@@ -50,7 +63,8 @@ const ChatWidget = () => {
   const [activeTab, setActiveTab] = useState<"home" | "conversation">("conversation");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails>({ name: "", email: "", phone: "" });
-  const [collectionStage, setCollectionStage] = useState<CollectionStage>("greeting");
+  const [collectionStage, setCollectionStage] = useState<CollectionStage>("initial");
+  const [showQuickActions, setShowQuickActions] = useState(true);
   const [messages, setMessages] = useState<Message[]>(getInitialMessages());
   const [isTyping, setIsTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -84,29 +98,28 @@ const ChatWidget = () => {
     }
   }, []);
 
-  // Start the collection flow after initial greeting
-  useEffect(() => {
-    if (!hasInitialized) {
-      setHasInitialized(true);
-      setTimeout(() => {
-        setIsTyping(true);
-        setTimeout(() => {
-          setIsTyping(false);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: "2",
-              content: "Can you please help me with your name?",
-              isBot: true,
-              timestamp: formatTime(new Date()),
-              inputType: "name",
-            },
-          ]);
-          setCollectionStage("name");
-        }, 1500);
-      }, 1000);
-    }
-  }, [hasInitialized]);
+  // Start collecting details after user interaction
+  const startDetailsCollection = (userChoice: string) => {
+    setShowQuickActions(false);
+    
+    // Add user's choice as a message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: userChoice,
+      isBot: false,
+      timestamp: formatTime(new Date()),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Ask for name
+    addBotMessage("Can you please help me with your name?", "name", () => {
+      setCollectionStage("name");
+    });
+  };
+
+  const handleQuickAction = (action: string) => {
+    startDetailsCollection(action);
+  };
 
   const getValidationError = (stage: CollectionStage, value: string): string | null => {
     const trimmedValue = value.trim();
@@ -343,14 +356,36 @@ const ChatWidget = () => {
                 )}
               </div>
             ))}
+            
+            {/* Quick action buttons - shown only in initial stage */}
+            {showQuickActions && collectionStage === "initial" && (
+              <div className="flex flex-wrap gap-2 justify-center mt-4">
+                {quickActions.map((action) => (
+                  <button
+                    key={action}
+                    onClick={() => handleQuickAction(action)}
+                    className="px-4 py-2 text-sm border border-border rounded-full bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                  >
+                    {action}
+                  </button>
+                ))}
+              </div>
+            )}
+            
             {isTyping && <TypingIndicator senderName="Twin Assistant" />}
             <div ref={messagesEndRef} />
           </div>
           
           <ChatInput
-            onSend={handleSendMessage}
-            placeholder={collectionStage === "complete" ? "We are here to help you..." : "Enter details in the input field"}
-            disabled={isTyping || collectionStage !== "complete"}
+            onSend={(content) => {
+              if (collectionStage === "initial") {
+                startDetailsCollection(content);
+              } else {
+                handleSendMessage(content);
+              }
+            }}
+            placeholder={collectionStage === "complete" ? "We are here to help you..." : "We are here to help you"}
+            disabled={isTyping || (collectionStage !== "complete" && collectionStage !== "initial")}
           />
         </>
       )}
