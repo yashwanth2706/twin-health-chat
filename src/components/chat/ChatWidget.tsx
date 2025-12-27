@@ -71,6 +71,7 @@ const ChatWidget = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -103,6 +104,9 @@ const ChatWidget = () => {
   // Start collecting details after user interaction
   const startDetailsCollection = (userChoice: string) => {
     setShowQuickActions(false);
+    
+    // Store the user's question as pending to send to Gemini after data collection
+    setPendingQuestion(userChoice);
     
     // Add user's choice as a message
     const userMessage: Message = {
@@ -233,7 +237,46 @@ const ChatWidget = () => {
         // Set collection stage to complete immediately (not async)
         setCollectionStage("complete");
         
-        addBotMessage(`Thank you for sharing your details! ✨\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`);
+        // If there's a pending question from quick action, send it to Gemini instead of thank you message
+        if (pendingQuestion) {
+          // Send the pending question directly to Gemini
+          setTimeout(async () => {
+            try {
+              const response = await chatAPI.sendMessage(
+                sessionId,
+                pendingQuestion,
+                updatedDetails
+              );
+              setApiError(null);
+
+              const botResponse: Message = {
+                id: (Date.now() + 1).toString(),
+                content: response.bot_response,
+                isBot: true,
+                timestamp: formatTime(new Date()),
+              };
+              setMessages((prev) => [...prev, botResponse]);
+            } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : 'Failed to get response from Gemini';
+              console.error('Send message error:', errorMessage);
+              setApiError(errorMessage);
+              
+              const errorMessage_: Message = {
+                id: (Date.now() + 2).toString(),
+                content: `Sorry, I encountered an error: ${errorMessage}. Please try again.`,
+                isBot: true,
+                timestamp: formatTime(new Date()),
+              };
+              setMessages((prev) => [...prev, errorMessage_]);
+            }
+            setIsTyping(false);
+            setPendingQuestion(null);
+          }, 1500);
+          setIsTyping(true);
+        } else {
+          // Default thank you message if no pending question
+          addBotMessage(`Thank you for sharing your details! ✨\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`);
+        }
         break;
     }
   };
