@@ -47,13 +47,13 @@ const quickActions = [
 const getInitialMessages = (): Message[] => [
   {
     id: "1",
-    content: "Welcome to Twin Health! 👋",
+    content: "Hello 👋 Welcome to Twin Health! We’re a precision metabolic health company using Whole Body Digital Twin™ technology — an AI-driven, personalized health platform that learns your unique metabolism and helps you heal your metabolism, reduce medications, and improve your metabolic health.",
     isBot: true,
     timestamp: formatTime(new Date()),
   },
   {
     id: "2",
-    content: "What are you looking for?",
+    content: "How can we help you today?",
     isBot: true,
     timestamp: formatTime(new Date()),
   },
