@@ -42,6 +42,8 @@ const quickActions = [
   "Existing Member",
   "Looking for Something else?",
   "FAQs",
+  "What is Metabolism?",
+  "What is Whole Body Digital Twin Technology?",
 ];
 
 const getInitialMessages = (): Message[] => [
@@ -112,7 +114,7 @@ const ChatWidget = () => {
     setMessages((prev) => [...prev, userMessage]);
 
     // Ask for name
-    addBotMessage("Can you please help me with your name?", "name", () => {
+    addBotMessage("Before we proceed, Can you please help me with your name?", "name", () => {
       setCollectionStage("name");
     });
   };
