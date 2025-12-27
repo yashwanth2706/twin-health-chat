@@ -43,7 +43,7 @@ const quickActions = [
   "Looking for Something else?",
   "FAQs",
   "What is Metabolism?",
-  "What is Whole Body Digital Twin Technology?",
+  "What is Digital Twin?",
 ];
 
 const getInitialMessages = (): Message[] => [
