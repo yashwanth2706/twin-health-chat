@@ -329,7 +329,10 @@ const ChatWidget = () => {
                   senderName={message.isBot ? "Twin Assistant" : undefined}
                 />
                 {message.isBot && message.inputType && !message.inputSubmitted && (
-                  <div className="ml-12 mt-2">
+                  <div className="flex gap-2 items-end mt-2">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-card shadow-sm overflow-hidden flex items-center justify-center">
+                      <span className="text-primary font-semibold text-sm">T</span>
+                    </div>
                     <InlineInput
                       placeholder={getInputPlaceholder(message.inputType)}
                       type={getInputType(message.inputType)}
