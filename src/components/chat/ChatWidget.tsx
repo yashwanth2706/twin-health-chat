@@ -188,6 +188,22 @@ const ChatWidget = () => {
       // End conversation directly with ticket message
       setCollectionStage("ended");
       addBotMessage(`Hello! 👋\n\nAs an existing member, please raise a ticket from the Twin Health App for faster assistance. Our support team will help you there.\n\nThank you!`);
+    } else if (action === "Looking for Something else?") {
+      setShowQuickActions(false);
+      
+      // Add user's choice as a message
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content: action,
+        isBot: false,
+        timestamp: formatTime(new Date()),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      
+      // Ask what they're looking for, then collect details
+      addBotMessage("What exactly you're looking for?", undefined, () => {
+        setCollectionStage("complete");
+      });
     } else {
       startDetailsCollection(action);
     }
