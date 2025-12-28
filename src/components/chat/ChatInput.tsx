@@ -8,14 +8,40 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
+const MAX_CHARS = 120;
+const VALID_PATTERN = /^[a-zA-Z\s.,!?"]*$/;
+
 const ChatInput = ({ onSend, placeholder = "Type your message...", disabled }: ChatInputProps) => {
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const validateInput = (value: string): boolean => {
+    if (value.length > MAX_CHARS) {
+      setError(`Message cannot exceed ${MAX_CHARS} characters`);
+      return false;
+    }
+    if (!VALID_PATTERN.test(value)) {
+      setError("Kindly provide proper input which includes english alphabets");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= MAX_CHARS) {
+      setMessage(value);
+      validateInput(value);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !disabled) {
+    if (message.trim() && !disabled && validateInput(message)) {
       onSend(message.trim());
       setMessage("");
+      setError("");
     }
   };
 
@@ -31,7 +57,7 @@ const ChatInput = ({ onSend, placeholder = "Type your message...", disabled }: C
       <div className="flex-1 relative">
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
@@ -41,13 +67,21 @@ const ChatInput = ({ onSend, placeholder = "Type your message...", disabled }: C
             "text-sm text-foreground placeholder:text-muted-foreground",
             "focus:outline-none focus:ring-2 focus:ring-accent/50",
             "transition-all duration-200",
-            "min-h-[44px] max-h-[120px]"
+            "min-h-[44px] max-h-[120px]",
+            error && "ring-2 ring-destructive/50"
           )}
           style={{
             height: "auto",
             overflow: "hidden",
           }}
+          maxLength={MAX_CHARS}
         />
+        {error && (
+          <p className="text-xs text-destructive mt-1 px-2">{error}</p>
+        )}
+        <span className="absolute right-2 bottom-1 text-xs text-muted-foreground">
+          {message.length}/{MAX_CHARS}
+        </span>
       </div>
       
       <button
