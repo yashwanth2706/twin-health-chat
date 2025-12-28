@@ -283,13 +283,17 @@ const ChatWidget = () => {
           }
         }
         
-        // Check if the pending question is "New Enquiry"
+        // Check if the pending question is "New Enquiry" or "Existing Member"
         if (pendingQuestion === "New Enquiry") {
           // End conversation with team contact message
           setCollectionStage("ended");
           addBotMessage(`Thank you for your interest, ${updatedDetails.name}! 🙏\n\nOne of our team members will get in touch with you shortly at ${updatedDetails.email} or ${updatedDetails.phone}.\n\nHave a great day!`);
           setPendingQuestion(null);
-        } else if (pendingQuestion) {
+        } else if (pendingQuestion === "Existing Member") {
+          // End conversation with ticket raising message
+          setCollectionStage("ended");
+          addBotMessage(`Hello ${updatedDetails.name}! 👋\n\nAs an existing member, please raise a ticket from the Twin Health App for faster assistance. Our support team will help you there.\n\nThank you!`);
+          setPendingQuestion(null);
           // Set collection stage to complete for other questions
           setCollectionStage("complete");
           
