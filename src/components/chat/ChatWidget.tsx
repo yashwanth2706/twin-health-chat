@@ -37,6 +37,9 @@ function formatTime(date: Date): string {
   });
 }
 
+const WELCOME_MESSAGE = "Hello 👋 Welcome to Twin Health! We help people improve their metabolic health using our Whole Body Digital Twin™ technology";
+const FOLLOW_UP_MESSAGE = "How can we help you today?";
+
 const quickActions = [
   "New Enquiry",
   "Existing Member",
@@ -44,21 +47,6 @@ const quickActions = [
   "FAQs",
   "What is Metabolism?",
   "What is Digital Twin?",
-];
-
-const getInitialMessages = (): Message[] => [
-  {
-    id: "1",
-    content: "Hello 👋 Welcome to Twin Health! We’re a precision metabolic health company using Whole Body Digital Twin™ technology — an AI-driven, personalized health platform that learns your unique metabolism and helps you heal your metabolism, reduce medications, and improve your metabolic health.",
-    isBot: true,
-    timestamp: formatTime(new Date()),
-  },
-  {
-    id: "2",
-    content: "How can we help you today?",
-    isBot: true,
-    timestamp: formatTime(new Date()),
-  },
 ];
 
 const ChatWidget = () => {
@@ -72,7 +60,10 @@ const ChatWidget = () => {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -85,37 +76,7 @@ const ChatWidget = () => {
   // Initialize welcome messages with typing animation
   useEffect(() => {
     if (!hasInitialized) {
-      // Show typing indicator for first message (1.5 seconds)
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages([
-          {
-            id: "1",
-            content: "Hello 👋 Welcome to Twin Health! We're a precision metabolic health company using Whole Body Digital Twin™ technology — an AI-driven, personalized health platform that learns your unique metabolism and helps you heal your metabolism, reduce medications, and improve your metabolic health.",
-            isBot: true,
-            timestamp: formatTime(new Date()),
-          },
-        ]);
-
-        // Show typing indicator for second message
-        setIsTyping(true);
-        setTimeout(() => {
-          setIsTyping(false);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: "2",
-              content: "How can we help you today?",
-              isBot: true,
-              timestamp: formatTime(new Date()),
-            },
-          ]);
-          // Show quick actions after all typing is complete
-          setShowQuickActions(true);
-        }, 1500);
-      }, 1500);
-
+      initializeWelcomeMessages();
       setHasInitialized(true);
     }
   }, [hasInitialized]);
@@ -126,6 +87,8 @@ const ChatWidget = () => {
       try {
         const response = await chatAPI.createSession();
         setSessionId(response.session_id);
+        setSessionStartTime(Date.now());
+        setSessionExpired(false);
         setApiError(null);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to initialize chat session';
@@ -138,6 +101,53 @@ const ChatWidget = () => {
       initializeSession();
     }
   }, []);
+
+  // Check session timeout every minute
+  useEffect(() => {
+    const timeoutCheck = setInterval(() => {
+      if (sessionStartTime && !sessionExpired) {
+        const elapsedTime = Date.now() - sessionStartTime;
+        if (elapsedTime >= SESSION_TIMEOUT_MS) {
+          setSessionExpired(true);
+          addBotMessage("Twin Assist has ended this session.");
+        }
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(timeoutCheck);
+  }, [sessionStartTime, sessionExpired]);
+
+  // Helper function to display welcome messages with typing animation
+  const initializeWelcomeMessages = () => {
+    setIsTyping(true);
+    setTimeout(() => {
+      setIsTyping(false);
+      setMessages([
+        {
+          id: "1",
+          content: WELCOME_MESSAGE,
+          isBot: true,
+          timestamp: formatTime(new Date()),
+        },
+      ]);
+
+      // Show typing indicator for second message
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: "2",
+            content: FOLLOW_UP_MESSAGE,
+            isBot: true,
+            timestamp: formatTime(new Date()),
+          },
+        ]);
+        setShowQuickActions(true);
+      }, 1500);
+    }, 1500);
+  };
 
   // Start collecting details after user interaction
   const startDetailsCollection = (userChoice: string) => {
@@ -390,6 +400,33 @@ const ChatWidget = () => {
     }
   };
 
+  const resetSession = async () => {
+    try {
+      // Create a new session
+      const response = await chatAPI.createSession();
+      setSessionId(response.session_id);
+      setSessionStartTime(Date.now());
+      setSessionExpired(false);
+      
+      // Reset chat state
+      setMessages([]);
+      setUserDetails({ name: "", email: "", phone: "" });
+      setCollectionStage("initial");
+      setShowQuickActions(false);
+      setHasInitialized(false);
+      setPendingQuestion(null);
+      setApiError(null);
+      
+      // Re-initialize the welcome messages using the helper function
+      initializeWelcomeMessages();
+      setHasInitialized(true);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create new session';
+      console.error('Reset session error:', errorMessage);
+      setApiError(errorMessage);
+    }
+  };
+
   const botInfo = {
     name: "Twin Health",
     subtitle: "Your Digital Health Partner",
@@ -459,17 +496,28 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          <ChatInput
-            onSend={(content) => {
-              if (collectionStage === "initial") {
-                startDetailsCollection(content);
-              } else {
-                handleSendMessage(content);
-              }
-            }}
-            placeholder={collectionStage === "complete" ? "We are here to help you..." : "We are here to help you"}
-            disabled={isTyping || (collectionStage !== "complete" && collectionStage !== "initial")}
-          />
+          {sessionExpired ? (
+            <div className="p-4 bg-destructive/10 border-t border-destructive/20">
+              <button
+                onClick={resetSession}
+                className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                Start New Conversation
+              </button>
+            </div>
+          ) : (
+            <ChatInput
+              onSend={(content) => {
+                if (collectionStage === "initial") {
+                  startDetailsCollection(content);
+                } else {
+                  handleSendMessage(content);
+                }
+              }}
+              placeholder={collectionStage === "complete" ? "We are here to help you..." : "We are here to help you"}
+              disabled={isTyping || (collectionStage !== "complete" && collectionStage !== "initial")}
+            />
+          )}
         </>
       )}
     </div>
