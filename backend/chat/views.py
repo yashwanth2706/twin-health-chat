@@ -13,6 +13,8 @@ from django.utils.decorators import method_decorator
 from .models import ChatSession, Message
 from .serializers import ChatSessionSerializer, ChatMessageRequestSerializer
 
+from .prompts.system_prompt import system_prompt
+
 # Gets the Gemini API Key from the environment variable `GEMINI_API_KEY`.
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
@@ -205,37 +207,13 @@ class ChatMessageAPIView(APIView):
                 "role": role,
                 "parts": [msg.content]
             })
-            
-        system_prompt = """You are a helpful health assistant for Twin Health, a platform dedicated to helping people reverse diabetes, 
-        obesity, and PCOD by healing the root cause of metabolism. 
-
-        Key information about Twin Health:
-        - We have 50,000+ members who have benefitted
-        - We use India's Whole Body Digital Twin™ technology
-        - We focus on healing the root cause of metabolic issues
-        - We provide personalized guidance for reversing diabetes, obesity, and PCOD
-
-        When users ask about health topics:
-        1. Be empathetic and supportive
-        2. Provide general health information
-        3. Encourage them to consult with healthcare professionals for medical advice
-        4. Share relevant Twin Health program benefits when appropriate
-        5. Answer questions about how our platform can help them
-
-        Always maintain a friendly, professional tone."""
+        
+        # Use system_prompt imported from .prompts (avoid reading a file at runtime)
+        # system_prompt is already imported at the top of this module.
                 
         response = client.models.generate_content(
             model="gemini-2.5-flash-lite",
             contents=system_prompt + "\n\nUser: " + user_message,
         )
-        # model = genai.GenerativeModel(settings.GEMINI_MODEL)
-        
-        # System prompt for Twin Health chatbot
-        
-        # Create new chat session with Gemini
-        # chat = model.start_chat(history=conversation_history)
-        
-        # Send the user message and get response
-        # response = chat.send_message(user_message)
         
         return response.text

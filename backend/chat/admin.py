@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import ChatSession, Message
+from django.utils.html import format_html
 
 
 @admin.register(ChatSession)
