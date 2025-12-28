@@ -44,7 +44,6 @@ const quickActions = [
   "New Enquiry",
   "Existing Member",
   "Looking for Something else?",
-  "FAQs",
   "What is Metabolism?",
   "What is Digital Twin?",
 ];
