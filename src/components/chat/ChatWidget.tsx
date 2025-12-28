@@ -173,7 +173,24 @@ const ChatWidget = () => {
   };
 
   const handleQuickAction = (action: string) => {
-    startDetailsCollection(action);
+    if (action === "Existing Member") {
+      setShowQuickActions(false);
+      
+      // Add user's choice as a message
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content: action,
+        isBot: false,
+        timestamp: formatTime(new Date()),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      
+      // End conversation directly with ticket message
+      setCollectionStage("ended");
+      addBotMessage(`Hello! 👋\n\nAs an existing member, please raise a ticket from the Twin Health App for faster assistance. Our support team will help you there.\n\nThank you!`);
+    } else {
+      startDetailsCollection(action);
+    }
   };
 
   const getValidationError = (stage: CollectionStage, value: string): string | null => {
