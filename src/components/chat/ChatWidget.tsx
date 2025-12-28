@@ -22,7 +22,7 @@ interface UserDetails {
   phone: string;
 }
 
-type CollectionStage = "initial" | "name" | "email" | "phone" | "complete";
+type CollectionStage = "initial" | "name" | "email" | "phone" | "complete" | "ended";
 
 // Validation patterns
 const namePattern = /^[a-zA-Z][a-zA-Z\s'-]*[a-zA-Z]$|^[a-zA-Z]$/;
@@ -283,11 +283,16 @@ const ChatWidget = () => {
           }
         }
         
-        // Set collection stage to complete immediately (not async)
-        setCollectionStage("complete");
-        
-        // If there's a pending question from quick action, send it to Gemini instead of thank you message
-        if (pendingQuestion) {
+        // Check if the pending question is "New Enquiry"
+        if (pendingQuestion === "New Enquiry") {
+          // End conversation with team contact message
+          setCollectionStage("ended");
+          addBotMessage(`Thank you for your interest, ${updatedDetails.name}! 🙏\n\nOne of our team members will get in touch with you shortly at ${updatedDetails.email} or ${updatedDetails.phone}.\n\nHave a great day!`);
+          setPendingQuestion(null);
+        } else if (pendingQuestion) {
+          // Set collection stage to complete for other questions
+          setCollectionStage("complete");
+          
           // Send the pending question directly to Gemini
           setTimeout(async () => {
             try {
@@ -324,6 +329,7 @@ const ChatWidget = () => {
           setIsTyping(true);
         } else {
           // Default thank you message if no pending question
+          setCollectionStage("complete");
           addBotMessage(`Thank you for sharing your details! ✨\n\nI'm here to help you on your journey to reverse diabetes and achieve metabolic wellness. How can I assist you today?`);
         }
         break;
@@ -497,8 +503,8 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {sessionExpired ? (
-            <div className="p-4 bg-destructive/10 border-t border-destructive/20">
+          {sessionExpired || collectionStage === "ended" ? (
+            <div className="p-4 bg-secondary/50 border-t border-border">
               <button
                 onClick={resetSession}
                 className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium"
