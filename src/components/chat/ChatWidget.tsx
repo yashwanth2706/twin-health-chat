@@ -110,6 +110,7 @@ const ChatWidget = () => {
         if (elapsedTime >= SESSION_TIMEOUT_MS) {
           setSessionExpired(true);
           addBotMessage("Twin Assist has ended this session.");
+          addBotMessage("Thank you for contacting us. Please feel free to reach out to us for any assistance.");
         }
       }
     }, 60000); // Check every minute

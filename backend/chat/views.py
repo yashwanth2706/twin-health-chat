@@ -80,6 +80,53 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+    @action(detail=False, methods=['get'])
+    def all_sessions(self, request):
+        """Get all sessions with user details and message summaries"""
+        sessions = ChatSession.objects.all().order_by('-created_at')
+        
+        sessions_data = []
+        for session in sessions:
+            messages = Message.objects.filter(session=session).order_by('created_at')
+            
+            # Build chat history with truncation
+            chat_history = []
+            for msg in messages:
+                sender = "User" if not msg.is_bot else "Bot"
+                content = msg.content
+                
+                # Truncate question to 100 chars
+                if not msg.is_bot:
+                    truncated_content = content[:100] + "..." if len(content) > 100 else content
+                else:
+                    # Truncate bot response to 200 chars
+                    truncated_content = content[:200] + "..." if len(content) > 200 else content
+                
+                chat_history.append({
+                    "sender": sender,
+                    "content": truncated_content,
+                    "timestamp": msg.created_at.isoformat()
+                })
+            
+            # Calculate session duration
+            created = session.created_at
+            updated = session.updated_at
+            duration_minutes = int((updated - created).total_seconds() / 60)
+            
+            sessions_data.append({
+                "session_id": session.session_id,
+                "user_name": session.user_name or "N/A",
+                "user_email": session.user_email or "N/A",
+                "user_phone": session.user_phone or "N/A",
+                "created_at": created.isoformat(),
+                "updated_at": updated.isoformat(),
+                "duration_minutes": duration_minutes,
+                "chat_history": chat_history,
+                "total_messages": len(messages)
+            })
+        
+        return Response(sessions_data)
+
 @method_decorator(csrf_exempt, name="dispatch")
 class ChatMessageAPIView(APIView):
     """API endpoint for sending messages and getting responses from Gemini"""
