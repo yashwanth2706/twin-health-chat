@@ -9,11 +9,15 @@ from datetime import datetime
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+import logging
+from typing import Dict, Optional
 
 from .models import ChatSession, Message
 from .serializers import ChatSessionSerializer, ChatMessageRequestSerializer
-
 from .prompts.system_prompt import system_prompt
+from .rag_engine import get_rag_engine
+
+logger = logging.getLogger(__name__)
 
 # Gets the Gemini API Key from the environment variable `GEMINI_API_KEY`.
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
@@ -195,11 +199,78 @@ class ChatMessageAPIView(APIView):
             )
 
     def _get_gemini_response(self, user_message, session):
-        """Get response from Gemini API with context from previous messages"""
+        """
+        Get response with RAG (Retrieval-Augmented Generation).
+        
+        Process:
+        1. Retrieve answer from knowledge base using RAG engine
+        2. If in-scope (high confidence), return knowledge base answer
+        3. If out-of-scope, use Gemini for general guidance
+        """
+        
+        try:
+            # Step 1: Try to retrieve answer from knowledge base
+            rag_engine = get_rag_engine()
+            kb_answer, metadata = rag_engine.retrieve_answer(user_message)
+            
+            # Log retrieval attempt
+            logger.info(f"RAG Query: '{user_message[:100]}...' | Intent: {metadata.get('intent_id')} | "
+                       f"Confidence: {metadata.get('confidence')} | Strategy: {metadata.get('strategy')}")
+            
+            # Step 2: Check if answer is in scope
+            if rag_engine.is_in_scope(metadata):
+                # High confidence match - return knowledge base answer
+                logger.info(f"In-scope answer returned (confidence: {metadata['confidence']})")
+                
+                # Add context about Twin Health if needed
+                return self._format_knowledge_base_answer(kb_answer, metadata)
+            
+            # Step 3: Out of scope - use Gemini for guidance
+            logger.info(f"Out-of-scope query (confidence: {metadata['confidence']}). Using Gemini.")
+            return self._get_gemini_followup(user_message, session, metadata)
+            
+        except Exception as e:
+            logger.error(f"RAG engine error: {str(e)}. Falling back to Gemini.")
+            return self._get_gemini_followup(user_message, session, None)
+    
+    def _format_knowledge_base_answer(self, answer: str, metadata: Dict) -> str:
+        """
+        Format knowledge base answer with optional context.
+        
+        Args:
+            answer: The answer from knowledge base
+            metadata: Metadata about the match
+            
+        Returns:
+            Formatted answer string
+        """
+        # For high-confidence answers, return as-is
+        # Optionally add: "(Source: Twin Health Knowledge Base)"
+        confidence = metadata.get('confidence', 0)
+        
+        if confidence >= 90:
+            # Very high confidence - direct answer
+            return answer
+        else:
+            # Good confidence - answer with light context
+            return f"{answer}\n\n*(This information is from Twin Health's official knowledge base)*"
+    
+    def _get_gemini_followup(self, user_message: str, session, rag_metadata: Optional[Dict]) -> str:
+        """
+        Get Gemini response for out-of-scope or follow-up questions.
+        
+        Args:
+            user_message: User's question
+            session: Chat session
+            rag_metadata: Optional metadata from RAG attempt
+            
+        Returns:
+            Gemini response
+        """
         
         # Build conversation context from previous messages
         conversation_history = []
-        previous_messages = Message.objects.filter(session=session).order_by('created_at')[:20]  # Last 20 messages
+        previous_messages = Message.objects.filter(session=session).order_by('created_at')[:20]
         
         for msg in previous_messages:
             role = "user" if not msg.is_bot else "model"
@@ -208,12 +279,26 @@ class ChatMessageAPIView(APIView):
                 "parts": [msg.content]
             })
         
-        # Use system_prompt imported from .prompts (avoid reading a file at runtime)
-        # system_prompt is already imported at the top of this module.
-                
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=system_prompt + "\n\nUser: " + user_message,
-        )
+        # Enhanced system prompt with RAG context
+        enhanced_prompt = system_prompt
         
-        return response.text
+        if rag_metadata and rag_metadata.get('confidence', 0) > 0:
+            # User's query is somewhat related to Twin Health but didn't match exactly
+            enhanced_prompt += f"\n\nNote: User's question has partial relevance to Twin Health " \
+                              f"(intent: {rag_metadata.get('intent_id')}). " \
+                              f"Provide helpful context while staying focused on Twin Health if applicable."
+        else:
+            # Completely out of scope
+            enhanced_prompt += "\n\nNote: User's question appears to be outside the scope of Twin Health. " \
+                              "Politely redirect to Twin Health topics or suggest contacting the team."
+        
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-lite",
+                contents=enhanced_prompt + "\n\nUser: " + user_message,
+            )
+            return response.text
+        
+        except Exception as e:
+            logger.error(f"Gemini API error: {str(e)}")
+            raise
