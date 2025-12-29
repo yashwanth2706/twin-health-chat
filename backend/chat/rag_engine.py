@@ -32,8 +32,8 @@ class RAGEngine:
     
     # Matching thresholds
     EXACT_MATCH_THRESHOLD = 90  # High confidence match
-    PARTIAL_MATCH_THRESHOLD = 70  # Good match
-    FUZZY_MATCH_THRESHOLD = 60  # Acceptable match
+    PARTIAL_MATCH_THRESHOLD = 80  # Good match
+    FUZZY_MATCH_THRESHOLD = 70  # Acceptable match
     CONFLICT_RESOLUTION_THRESHOLD = 5  # Points difference to declare clear winner
     
     def __init__(self, knowledge_base_path: str = None):

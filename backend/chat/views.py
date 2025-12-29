@@ -204,8 +204,10 @@ class ChatMessageAPIView(APIView):
         
         Process:
         1. Retrieve answer from knowledge base using RAG engine
-        2. If in-scope (high confidence), return knowledge base answer
-        3. If out-of-scope, use Gemini for general guidance
+        2. Check if answer is in scope (high confidence)
+        3. Validate contextual alignment between user question and KB match
+        4. Return KB answer if high confidence AND contextually aligned
+        5. Use Gemini for low confidence or misaligned matches
         """
         
         try:
@@ -217,15 +219,28 @@ class ChatMessageAPIView(APIView):
             logger.info(f"RAG Query: '{user_message[:100]}...' | Intent: {metadata.get('intent_id')} | "
                        f"Confidence: {metadata.get('confidence')} | Strategy: {metadata.get('strategy')}")
             
-            # Step 2: Check if answer is in scope
+            # Step 2: Check if answer is in scope (high confidence threshold)
             if rag_engine.is_in_scope(metadata):
-                # High confidence match - return knowledge base answer
-                logger.info(f"In-scope answer returned (confidence: {metadata['confidence']})")
+                # Step 3: Validate contextual alignment with the matched question
+                is_contextually_aligned = self._validate_contextual_alignment(
+                    user_message, 
+                    metadata.get('matched_question', ''),
+                    metadata.get('confidence', 0)
+                )
                 
-                # Add context about Twin Health if needed
-                return self._format_knowledge_base_answer(kb_answer, metadata)
+                if is_contextually_aligned:
+                    # High confidence AND contextually aligned - return KB answer
+                    logger.info(f"In-scope and contextually aligned answer returned "
+                              f"(confidence: {metadata['confidence']})")
+                    return self._format_knowledge_base_answer(kb_answer, metadata)
+                else:
+                    # High confidence but NOT contextually aligned - use Gemini
+                    logger.warning(f"High confidence match but contextually misaligned. "
+                                 f"Matched: '{metadata.get('matched_question')}' vs "
+                                 f"User: '{user_message}'. Using Gemini for context-aware response.")
+                    return self._get_gemini_followup(user_message, session, metadata)
             
-            # Step 3: Out of scope - use Gemini for guidance
+            # Step 4: Out of scope - use Gemini for guidance
             logger.info(f"Out-of-scope query (confidence: {metadata['confidence']}). Using Gemini.")
             return self._get_gemini_followup(user_message, session, metadata)
             
@@ -233,9 +248,87 @@ class ChatMessageAPIView(APIView):
             logger.error(f"RAG engine error: {str(e)}. Falling back to Gemini.")
             return self._get_gemini_followup(user_message, session, None)
     
+    def _validate_contextual_alignment(self, user_query: str, matched_question: str, confidence: float) -> bool:
+        """
+        Validate that the matched KB question is contextually aligned with the user's query.
+        
+        This prevents false positives where the RAG engine finds a high-scoring match
+        that isn't actually answering what the user asked.
+        
+        Strategy:
+        1. For high confidence (>=90): Always trust the match
+        2. For medium-high confidence (80-89): Apply strict contextual validation
+        3. For medium confidence (70-79): Apply moderate validation
+        
+        Validation checks:
+        - Semantic similarity of key topics
+        - Word overlap and semantic meaning
+        - Query intent alignment
+        
+        Args:
+            user_query: User's original question
+            matched_question: Question that matched from KB
+            confidence: Confidence score from RAG matching
+            
+        Returns:
+            True if contextually aligned, False otherwise
+        """
+        from difflib import SequenceMatcher
+        from rapidfuzz import fuzz
+        
+        user_query_lower = user_query.lower().strip()
+        matched_question_lower = matched_question.lower().strip()
+        
+        # Step 1: Exact match or very high confidence - always trust
+        if confidence >= 90:
+            logger.debug(f"Very high confidence ({confidence}%). Skipping contextual validation.")
+            return True
+        
+        # Step 2: Extract key semantic tokens (excluding common words)
+        stop_words = {'the', 'a', 'an', 'is', 'are', 'am', 'do', 'does', 'did', 'will', 'would', 
+                     'can', 'could', 'should', 'may', 'might', 'must', 'have', 'has', 'had',
+                     'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        
+        user_tokens = set(word for word in user_query_lower.split() if word not in stop_words and len(word) > 2)
+        matched_tokens = set(word for word in matched_question_lower.split() if word not in stop_words and len(word) > 2)
+        
+        # Calculate token overlap
+        if user_tokens and matched_tokens:
+            token_overlap = len(user_tokens & matched_tokens) / len(user_tokens | matched_tokens)
+        else:
+            token_overlap = 0
+        
+        # Step 3: Apply threshold based on confidence level
+        if confidence >= 80:
+            # Medium-high confidence: stricter validation needed
+            alignment_threshold = 0.4  # At least 40% semantic overlap required
+        else:
+            # Medium confidence (70-79): moderate validation
+            alignment_threshold = 0.3  # At least 30% semantic overlap required
+        
+        # Step 4: Additional fuzzy alignment check
+        fuzzy_alignment_score = fuzz.token_set_ratio(user_query_lower, matched_question_lower) / 100.0
+        
+        # Combined alignment score (weighted)
+        combined_alignment = (token_overlap * 0.5) + (fuzzy_alignment_score * 0.5)
+        
+        is_aligned = combined_alignment >= alignment_threshold
+        
+        logger.debug(f"Contextual alignment check: confidence={confidence}, "
+                    f"token_overlap={token_overlap:.2f}, fuzzy_score={fuzzy_alignment_score:.2f}, "
+                    f"combined={combined_alignment:.2f}, threshold={alignment_threshold}, "
+                    f"aligned={is_aligned}")
+        
+        return is_aligned
+    
     def _format_knowledge_base_answer(self, answer: str, metadata: Dict) -> str:
         """
-        Format knowledge base answer with optional context.
+        Format knowledge base answer based on confidence level.
+        
+        Confidence Levels:
+        - >= 90 (EXACT_MATCH): Send answer directly to user
+        - >= 80 (PARTIAL_MATCH): Send answer directly to user
+        - >= 70 (FUZZY_MATCH) or less: Send to chatbot with KB context block
         
         Args:
             answer: The answer from knowledge base
@@ -244,16 +337,35 @@ class ChatMessageAPIView(APIView):
         Returns:
             Formatted answer string
         """
-        # For high-confidence answers, return as-is
-        # Optionally add: "(Source: Twin Health Knowledge Base)"
         confidence = metadata.get('confidence', 0)
+        matched_question = metadata.get('matched_question', '')
+        intent_id = metadata.get('intent_id', '')
+        strategy = metadata.get('strategy', '')
         
-        if confidence >= 90:
-            # Very high confidence - direct answer
+        # High confidence (EXACT or PARTIAL MATCH) - Direct answer to user
+        if confidence >= 80:
+            logger.info(f"High confidence match ({confidence}%). Sending direct KB answer to user.")
             return answer
+        
+        # Lower confidence (FUZZY MATCH or less) - Include knowledge base block
         else:
-            # Good confidence - answer with light context
-            return f"{answer}\n\n*(This information is from Twin Health's official knowledge base)*"
+            logger.info(f"Lower confidence match ({confidence}%). Including KB context block.")
+            
+            kb_context_block = f"""Based on our knowledge base, here's what I found:
+
+**Knowledge Base Match:**
+- Confidence: {confidence}%
+- Matched Intent: {intent_id}
+- Matched Question: "{matched_question}"
+- Detection Strategy: {strategy}
+
+**Answer:**
+{answer}
+
+---
+*This answer is from Twin Health's knowledge base. If you need more details, feel free to ask follow-up questions!*"""
+            
+            return kb_context_block
     
     def _get_gemini_followup(self, user_message: str, session, rag_metadata: Optional[Dict]) -> str:
         """

@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Copilot summary files
+copilot_summary_md_files
+
 # Distribution / packaging
 .Python
 build/

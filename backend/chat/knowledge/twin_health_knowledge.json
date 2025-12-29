@@ -169,9 +169,20 @@
           "intent": "pricing",
           "questions": [
             "What is the cost?",
-            "What is the price?"
+            "What is the price?",
+            "What is the price of Twin Health program?",
+            "How much does Twin Health cost?",
+            "What are the pricing details?"
           ],
-          "answer": "One of our team members will get in touch to discuss pricing details."
+          "answer": "Twin Health pricing varies based on the program structure, duration, included services, and individual circumstances. Since costs can differ significantly based on employer partnerships, health plan coverage, and region, we recommend connecting with our team to get specific pricing information tailored to your situation. A member of our team will provide detailed pricing and discuss available options with you."
+        },
+        {
+          "intent": "pricing_factors",
+          "questions": [
+            "What factors affect the price?",
+            "Why does pricing vary?"
+          ],
+          "answer": "Twin Health pricing depends on several factors including program duration, included devices and tools, level of coaching and clinical support, regional availability, and whether coverage is through an employer, health plan, or direct enrollment. These variables make each program's cost unique."
         },
         {
           "intent": "refund_policy",
@@ -179,7 +190,7 @@
             "Is there a refund policy?",
             "Does Twin Health provide refunds?"
           ],
-          "answer": "Please speak with one of our team members for details about refunds."
+          "answer": "Please speak with one of our team members for details about refunds and cancellation policies specific to your enrollment."
         }
       ]
     },
