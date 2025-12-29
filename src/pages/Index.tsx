@@ -5,6 +5,10 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import Header from "@/components/landing/Header";
 import HeroSection from "@/components/landing/HeroSection";
 import WhyTwinSection from "@/components/landing/WhyTwinSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
+import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
@@ -32,6 +36,10 @@ const Index = () => {
         <Header />
         <HeroSection />
         <WhyTwinSection />
+        <HowItWorksSection />
+        <TestimonialsSection />
+        <CTASection />
+        <Footer />
 
         {/* Chat Widget Container */}
         <div
