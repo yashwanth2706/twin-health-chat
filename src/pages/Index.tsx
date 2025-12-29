@@ -9,7 +9,7 @@ import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import CTASection from "@/components/landing/CTASection";
 import Footer from "@/components/landing/Footer";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.ts";
 
 const Index = () => {
   const [isOpen, setIsOpen] = useState(false);
