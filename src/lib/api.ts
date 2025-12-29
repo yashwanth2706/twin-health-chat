@@ -1,5 +1,9 @@
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/chat';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+if (!API_BASE_URL) {
+  throw new Error("VITE_API_BASE_URL is not defined");
+}
 
 interface UserDetails {
   name: string;
@@ -29,13 +33,15 @@ interface ErrorResponse {
   error: string;
 }
 
+console.log("API BASE URL:", import.meta.env.VITE_API_BASE_URL);
+
 export const chatAPI = {
   /**
    * Create a new chat session
    */
   async createSession(userDetails?: Partial<UserDetails>): Promise<SessionResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/sessions/create_session/`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/sessions/create_session/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +70,7 @@ export const chatAPI = {
     userDetails?: Partial<UserDetails>
   ): Promise<MessageResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/message/`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +101,7 @@ export const chatAPI = {
   async getSession(sessionId: string): Promise<SessionResponse> {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/sessions/get_session/?session_id=${encodeURIComponent(sessionId)}`
+        `${API_BASE_URL}/api/chat/sessions/get_session/?session_id=${encodeURIComponent(sessionId)}`
       );
 
       if (!response.ok) {
@@ -119,7 +125,7 @@ export const chatAPI = {
     userDetails: Partial<UserDetails>
   ): Promise<SessionResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/sessions/update_user_details/`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/sessions/update_user_details/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
