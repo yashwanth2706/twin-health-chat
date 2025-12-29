@@ -1,3 +1,9 @@
+import teamSpirit from "@/assets/illustrations/team-spirit.png";
+import fitnessStats from "@/assets/illustrations/fitness-stats.png";
+import treatment from "@/assets/illustrations/treatment.png";
+import personalGrowth from "@/assets/illustrations/personal-growth.png";
+import fitnessTracking from "@/assets/illustrations/fitness-tracking.png";
+
 const HeroSection = () => {
   const conditions = [
     "Prediabetes",
@@ -34,25 +40,43 @@ const HeroSection = () => {
           We help you to reverse diabetes, obesity and PCOD by healing the exact root cause of your metabolism. Our Whole Body Digital Twin uses real-time data to deliver personalised guidance for your lifestyle
         </p>
 
-        {/* Image Collage Placeholder */}
+        {/* Illustration Collage */}
         <div className="relative w-full max-w-4xl mx-auto">
           <div className="grid grid-cols-3 gap-2 md:gap-4">
-            <div className="col-span-1 row-span-2 bg-gradient-to-br from-accent/20 to-primary/20 rounded-2xl aspect-[3/4] flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-accent/30 flex items-center justify-center">
-                <span className="text-4xl">👨‍⚕️</span>
-              </div>
+            <div className="col-span-1 row-span-2 bg-gradient-to-br from-accent/10 to-primary/10 rounded-2xl overflow-hidden flex items-center justify-center p-4">
+              <img 
+                src={treatment} 
+                alt="Expert medical care and treatment" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="bg-muted rounded-2xl aspect-video flex items-center justify-center">
-              <span className="text-3xl">👩‍👧</span>
+            <div className="bg-muted rounded-2xl overflow-hidden flex items-center justify-center p-3">
+              <img 
+                src={teamSpirit} 
+                alt="Community support and teamwork" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="bg-muted rounded-2xl aspect-video flex items-center justify-center">
-              <span className="text-3xl">👴</span>
+            <div className="bg-muted rounded-2xl overflow-hidden flex items-center justify-center p-3">
+              <img 
+                src={fitnessStats} 
+                alt="Track your fitness progress" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="bg-muted rounded-2xl aspect-video flex items-center justify-center">
-              <span className="text-3xl">👨‍👩‍👧</span>
+            <div className="bg-muted rounded-2xl overflow-hidden flex items-center justify-center p-3">
+              <img 
+                src={personalGrowth} 
+                alt="Personal growth and wellness" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div className="bg-muted rounded-2xl aspect-video flex items-center justify-center">
-              <span className="text-3xl">👩</span>
+            <div className="bg-muted rounded-2xl overflow-hidden flex items-center justify-center p-3">
+              <img 
+                src={fitnessTracking} 
+                alt="Health monitoring and tracking" 
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
         </div>
