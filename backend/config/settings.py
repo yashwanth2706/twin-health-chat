@@ -129,12 +129,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "https://twin-health-chat-lb58rlryv-yashwanth-as-projects.vercel.app",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
+    "https://twin-health-chat-frontend.onrender.com",
     "http://localhost:5173",
-    "http://localhost:3000",
     "http://127.0.0.1:5173",
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
 
@@ -153,9 +151,18 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "https://twin-health-chat-lb58rlryv-yashwanth-as-projects.vercel.app/",
+    "https://twin-health-chat-frontend.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 # REST Framework Settings
