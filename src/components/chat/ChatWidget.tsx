@@ -7,6 +7,16 @@ import WelcomeScreen from "./WelcomeScreen";
 import TypingIndicator from "./TypingIndicator";
 import InlineInput from "./InlineInput";
 import { chatAPI } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   id: string;
@@ -62,6 +72,8 @@ const ChatWidget = () => {
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [showInfoPrompt, setShowInfoPrompt] = useState(false);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -205,8 +217,38 @@ const ChatWidget = () => {
         setCollectionStage("complete");
       });
     } else {
-      startDetailsCollection(action);
+      // Show info prompt dialog for actions requiring data collection
+      setPendingAction(action);
+      setShowInfoPrompt(true);
     }
+  };
+
+  const handleInfoPromptResponse = (collectInfo: boolean) => {
+    setShowInfoPrompt(false);
+    
+    if (!pendingAction) return;
+    
+    if (collectInfo) {
+      // User chose Yes - collect their details
+      startDetailsCollection(pendingAction);
+    } else {
+      // User chose No - proceed without data collection
+      setShowQuickActions(false);
+      
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        content: pendingAction,
+        isBot: false,
+        timestamp: formatTime(new Date()),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      
+      // Set to complete and proceed with conversation
+      setCollectionStage("complete");
+      addBotMessage(`No problem! I'm here to help. What would you like to know about Twin Health?`);
+    }
+    
+    setPendingAction(null);
   };
 
   const getValidationError = (stage: CollectionStage, value: string): string | null => {
@@ -465,7 +507,34 @@ const ChatWidget = () => {
   };
 
   return (
-    <div className="w-full max-w-sm sm:max-w-md mx-auto h-[500px] sm:h-[550px] max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
+    <>
+      {/* Info Collection Prompt Dialog */}
+      <AlertDialog open={showInfoPrompt} onOpenChange={setShowInfoPrompt}>
+        <AlertDialogContent className="max-w-[340px] rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-lg">Quick Info Request</AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-sm">
+              To help us serve you better, could you please provide your basic info? Takes &lt; 1 min
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-2 sm:justify-center">
+            <AlertDialogCancel 
+              onClick={() => handleInfoPromptResponse(false)}
+              className="flex-1 mt-0"
+            >
+              No
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleInfoPromptResponse(true)}
+              className="flex-1"
+            >
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="w-full max-w-sm sm:max-w-md mx-auto h-[500px] sm:h-[550px] max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
       {activeTab === "home" ? (
         <WelcomeScreen
           brandName="Twin Health"
@@ -565,7 +634,8 @@ const ChatWidget = () => {
           )}
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
