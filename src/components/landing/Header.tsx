@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import twinHealthLogo from "@/assets/TwinHealthLogo.png";
 
 const Header = () => {
@@ -13,28 +11,6 @@ const Header = () => {
           </span>
         </div>
       </div>
-
-      <nav className="hidden md:flex items-center gap-8">
-        <a href="#about" className="text-white font-medium hover:text-white/80 transition-colors">
-          About Twin
-        </a>
-        <a href="#success" className="text-white font-medium hover:text-white/80 transition-colors">
-          Success Stories
-        </a>
-        <a href="#team" className="text-white font-medium hover:text-white/80 transition-colors">
-          Our Team
-        </a>
-        <Button className="bg-[#e87b35] hover:bg-[#d66a28] text-white rounded-full px-6">
-          Get In Touch
-        </Button>
-        <button className="p-2">
-          <Menu className="w-6 h-6 text-white" />
-        </button>
-      </nav>
-
-      <button className="md:hidden p-2">
-        <Menu className="w-6 h-6 text-foreground" />
-      </button>
     </header>
   );
 };
