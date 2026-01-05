@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { RotateCcw } from "lucide-react";
 import ChatHeader from "./ChatHeader";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -533,6 +534,19 @@ const ChatWidget = () => {
                     {action}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Restart button during data collection */}
+            {(collectionStage === "name" || collectionStage === "email" || collectionStage === "phone") && !isTyping && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={resetSession}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Restart
+                </button>
               </div>
             )}
             
