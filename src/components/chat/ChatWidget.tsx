@@ -445,30 +445,30 @@ const ChatWidget = () => {
   };
 
   const resetSession = async () => {
+    // Reset chat state first so UI updates immediately
+    setMessages([]);
+    setUserDetails({ name: "", email: "", phone: "" });
+    setCollectionStage("initial");
+    setShowQuickActions(false);
+    setHasInitialized(false);
+    setPendingQuestion(null);
+    setApiError(null);
+    setSessionExpired(false);
+    
     try {
-      // Create a new session
+      // Try to create a new session
       const response = await chatAPI.createSession();
       setSessionId(response.session_id);
       setSessionStartTime(Date.now());
-      setSessionExpired(false);
-      
-      // Reset chat state
-      setMessages([]);
-      setUserDetails({ name: "", email: "", phone: "" });
-      setCollectionStage("initial");
-      setShowQuickActions(false);
-      setHasInitialized(false);
-      setPendingQuestion(null);
-      setApiError(null);
-      
-      // Re-initialize the welcome messages using the helper function
-      initializeWelcomeMessages();
-      setHasInitialized(true);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to create new session';
       console.error('Reset session error:', errorMessage);
-      setApiError(errorMessage);
+      // Continue without API session - local chat still works
     }
+    
+    // Re-initialize the welcome messages
+    initializeWelcomeMessages();
+    setHasInitialized(true);
   };
 
   const botInfo = {
