@@ -494,7 +494,6 @@ const ChatWidget = () => {
           <ChatHeader
             name={botInfo.name}
             subtitle={botInfo.subtitle}
-            onRestart={resetSession}
           />
           
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-secondary/30">
