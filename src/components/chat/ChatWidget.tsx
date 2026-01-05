@@ -534,7 +534,7 @@ const ChatWidget = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="w-full max-w-sm sm:max-w-md mx-auto h-[500px] sm:h-[550px] max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
+      <div className="w-full max-w-[calc(100vw-32px)] sm:max-w-md mx-auto h-[calc(100vh-180px)] sm:h-[550px] max-h-[500px] sm:max-h-[calc(100vh-140px)] flex flex-col bg-background rounded-2xl shadow-chat-lg overflow-hidden">
       {activeTab === "home" ? (
         <WelcomeScreen
           brandName="Twin Health"
