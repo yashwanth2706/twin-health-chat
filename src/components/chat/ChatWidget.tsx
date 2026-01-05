@@ -444,31 +444,19 @@ const ChatWidget = () => {
     }
   };
 
-  const resetSession = async () => {
-    try {
-      // Create a new session
-      const response = await chatAPI.createSession();
-      setSessionId(response.session_id);
-      setSessionStartTime(Date.now());
-      setSessionExpired(false);
-      
-      // Reset chat state
-      setMessages([]);
-      setUserDetails({ name: "", email: "", phone: "" });
-      setCollectionStage("initial");
-      setShowQuickActions(false);
-      setHasInitialized(false);
-      setPendingQuestion(null);
-      setApiError(null);
-      
-      // Re-initialize the welcome messages using the helper function
-      initializeWelcomeMessages();
-      setHasInitialized(true);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create new session';
-      console.error('Reset session error:', errorMessage);
-      setApiError(errorMessage);
-    }
+  const resetSession = () => {
+    // Reset chat state without calling backend API
+    setMessages([]);
+    setUserDetails({ name: "", email: "", phone: "" });
+    setCollectionStage("initial");
+    setShowQuickActions(false);
+    setHasInitialized(false);
+    setPendingQuestion(null);
+    setSessionExpired(false);
+    
+    // Re-initialize the welcome messages using the helper function
+    initializeWelcomeMessages();
+    setHasInitialized(true);
   };
 
   const botInfo = {
