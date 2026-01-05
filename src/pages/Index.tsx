@@ -35,11 +35,19 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <HeroSection />
-        <WhyTwinSection />
-        <HowItWorksSection />
-        <TestimonialsSection />
+        <section id="why-twin">
+          <WhyTwinSection />
+        </section>
+        <section id="how-it-works">
+          <HowItWorksSection />
+        </section>
+        <section id="testimonials">
+          <TestimonialsSection />
+        </section>
         <CTASection />
-        <Footer />
+        <section id="contact">
+          <Footer />
+        </section>
 
         {/* Chat Widget Container */}
         <div
